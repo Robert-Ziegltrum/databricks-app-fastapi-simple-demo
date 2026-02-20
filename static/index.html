@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Databricks Demo App</title>
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <style>
+    :root {
+      --red: #FF3621;
+      --navy: #1B3A8C;
+      --green: #00A972;
+      --dark: #1a1a1a;
+      --light: #f5f5f5;
+      --border: #e0e0e0;
+      --card-bg: #fff;
+      --radius: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--light);
+      color: var(--dark);
+    }
+
+    /* ── Navbar ── */
+    nav {
+      background: var(--dark);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 0 24px;
+      height: 52px;
+    }
+
+    nav .brand {
+      font-weight: 700;
+      font-size: 1.05rem;
+      margin-right: 16px;
+      color: #fff;
+      text-decoration: none;
+    }
+
+    nav a {
+      color: #ccc;
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.88rem;
+      transition: background .15s;
+    }
+
+    nav a:hover,
+    nav a.active {
+      background: rgba(255, 255, 255, .12);
+      color: #fff;
+    }
+
+    /* ── Layout ── */
+    .page {
+      display: none;
+      padding: 28px 32px;
+      max-width: 1300px;
+      margin: 0 auto;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      margin-bottom: 4px;
+    }
+
+    h2 {
+      font-size: 1.3rem;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      color: #666;
+      margin-bottom: 20px;
+      font-size: 0.92rem;
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 18px 22px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
+      margin-bottom: 18px;
+    }
+
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .kpi {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
+    }
+
+    .kpi .label {
+      font-size: 0.78rem;
+      color: #888;
+      margin-bottom: 4px;
+    }
+
+    .kpi .value {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--red);
+    }
+
+    /* ── Home grid ── */
+    .home-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      margin-top: 20px;
+    }
+
+    .home-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 22px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
+    }
+
+    .home-card h3 {
+      margin-bottom: 8px;
+    }
+
+    .home-card p {
+      color: #666;
+      font-size: 0.88rem;
+      margin-bottom: 14px;
+    }
+
+    .home-card a {
+      display: inline-block;
+      padding: 7px 16px;
+      border: 1.5px solid var(--dark);
+      border-radius: 6px;
+      text-decoration: none;
+      color: var(--dark);
+      font-size: 0.85rem;
+      transition: background .15s;
+    }
+
+    .home-card a:hover {
+      background: var(--dark);
+      color: #fff;
+    }
+
+    /* ── Filters ── */
+    .filters {
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .filter-group label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #555;
+    }
+
+    select,
+    input[type=number],
+    input[type=text],
+    textarea {
+      padding: 7px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.88rem;
+      background: #fff;
+      color: var(--dark);
+    }
+
+    select:focus,
+    input:focus,
+    textarea:focus {
+      outline: 2px solid var(--red);
+      border-color: transparent;
+    }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 18px;
+    }
+
+    .tab-btn {
+      padding: 10px 20px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-size: 0.88rem;
+      color: #666;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: color .15s;
+    }
+
+    .tab-btn.active {
+      color: var(--red);
+      border-bottom-color: var(--red);
+      font-weight: 600;
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    /* ── Buttons ── */
+    .btn {
+      padding: 8px 18px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.88rem;
+      font-weight: 600;
+      transition: opacity .15s;
+    }
+
+    .btn:hover {
+      opacity: .85;
+    }
+
+    .btn-primary {
+      background: var(--red);
+      color: #fff;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1.5px solid #888;
+      color: var(--dark);
+    }
+
+    .btn:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+
+    /* ── Tables ── */
+    .data-table-wrap {
+      overflow-x: auto;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.84rem;
+    }
+
+    th {
+      background: var(--light);
+      font-weight: 600;
+      padding: 9px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 8px 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    tr:hover td {
+      background: #fafafa;
+    }
+
+    /* ── SQL Editor ── */
+    #sql-editor {
+      width: 100%;
+      height: 150px;
+      font-family: monospace;
+      font-size: 0.88rem;
+      resize: vertical;
+    }
+
+    .sql-controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    /* ── Catalog browser ── */
+    .catalog-cols {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--card-bg);
+    }
+
+    .catalog-col {
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      max-height: 520px;
+    }
+
+    .catalog-col:last-child {
+      border-right: none;
+    }
+
+    .catalog-col-header {
+      padding: 10px 14px;
+      font-weight: 600;
+      font-size: 0.82rem;
+      background: var(--light);
+      border-bottom: 1px solid var(--border);
+      color: #555;
+    }
+
+    .catalog-item {
+      padding: 9px 14px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      border-bottom: 1px solid #f0f0f0;
+      transition: background .1s;
+    }
+
+    .catalog-item:hover {
+      background: #f0f4ff;
+    }
+
+    .catalog-item.selected {
+      background: #e8f0fe;
+      color: var(--navy);
+      font-weight: 600;
+    }
+
+    .detail-pane {
+      padding: 14px;
+      font-size: 0.84rem;
+    }
+
+    .detail-pane .field {
+      margin-bottom: 8px;
+    }
+
+    .detail-pane .field strong {
+      display: inline-block;
+      min-width: 70px;
+      color: #555;
+    }
+
+    code {
+      background: #f0f0f0;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.82em;
+    }
+
+    pre {
+      background: var(--light);
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 0.8em;
+      overflow-x: auto;
+      margin-top: 8px;
+    }
+
+
+    /* ── Identity ── */
+    .identity-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #e8f0fe;
+      color: var(--navy);
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.78rem;
+      margin: 3px;
+    }
+
+    /* ── Alerts ── */
+    .alert {
+      padding: 12px 16px;
+      border-radius: 6px;
+      margin-bottom: 14px;
+      font-size: 0.88rem;
+    }
+
+    .alert-success {
+      background: #e6f4ea;
+      color: #1e7e34;
+    }
+
+    .alert-warning {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .alert-error {
+      background: #fdecea;
+      color: #c0392b;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #ddd;
+      border-top-color: var(--red);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .loading {
+      color: #888;
+      font-size: 0.88rem;
+      padding: 20px 0;
+    }
+
+    @media (max-width: 900px) {
+      .kpi-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .home-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .chat-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .catalog-cols {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <nav>
+    <a class="brand" href="#" onclick="navigate('home')">🧱 Databricks Demo</a>
+    <a href="#" onclick="navigate('home')" id="nav-home">🏠 Home</a>
+    <a href="#" onclick="navigate('identity')" id="nav-identity">👤 Identity</a>
+    <a href="#" onclick="navigate('sales')" id="nav-sales">💰 Sales</a>
+    <a href="#" onclick="navigate('taxi')" id="nav-taxi">🚕 NYC Taxi</a>
+    <a href="#" onclick="navigate('sql')" id="nav-sql">🔍 SQL Explorer</a>
+    <a href="#" onclick="navigate('catalog')" id="nav-catalog">📂 Catalog</a>
+    <a href="/docs" target="_blank" style="margin-left:auto;color:#aaa">📖 API Docs ↗</a>
+  </nav>
+
+  <!-- ══════════════════════════════════════════════════════
+     HOME
+══════════════════════════════════════════════════════ -->
+  <div class="page active" id="page-home">
+    <h1>🧱 Databricks Demo App</h1>
+    <p class="subtitle">A realistic interactive demo built with FastAPI + vanilla JS, deployed directly from Git — zero
+      manual setup.</p>
+    <div class="home-grid">
+      <div class="home-card">
+        <h3 style="color:#FF3621">👤 Identity & Access</h3>
+        <p>See who you are, your groups, and workspace context.</p><a href="#" onclick="navigate('identity')">Open →</a>
+      </div>
+      <div class="home-card">
+        <h3 style="color:#1B3A8C">💰 Sales Analytics</h3>
+        <p>Explore TPC-H orders, revenue trends, and top customers.</p><a href="#" onclick="navigate('sales')">Open
+          →</a>
+      </div>
+      <div class="home-card">
+        <h3 style="color:#00A972">🚕 NYC Taxi Analytics</h3>
+        <p>Analyse NYC taxi trips: fares, distances, and patterns.</p><a href="#" onclick="navigate('taxi')">Open →</a>
+      </div>
+      <div class="home-card">
+        <h3 style="color:#FF3621">🔍 SQL Explorer</h3>
+        <p>Write and run ad-hoc SQL against the samples catalog.</p><a href="#" onclick="navigate('sql')">Open →</a>
+      </div>
+      <div class="home-card">
+        <h3 style="color:#1B3A8C">📂 Catalog Browser</h3>
+        <p>Browse Unity Catalog: catalogs, schemas, tables, columns.</p><a href="#" onclick="navigate('catalog')">Open
+          →</a>
+      </div>
+    </div>
+    <p style="margin-top:28px;color:#999;font-size:0.82rem">
+      Built with FastAPI + Databricks Apps ·
+      <a href="https://apps-cookbook.dev" target="_blank" style="color:#999">Cookbook</a> ·
+      <a href="https://github.com/databricks-solutions/databricks-apps-cookbook" target="_blank"
+        style="color:#999">GitHub</a>
+    </p>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+     IDENTITY
+══════════════════════════════════════════════════════ -->
+  <div class="page" id="page-identity">
+    <h1>👤 Identity & Access</h1>
+    <p class="subtitle">Your identity as seen by this Databricks App — from HTTP headers and the Databricks SDK.</p>
+    <div id="identity-content">
+      <div class="loading"><span class="spinner"></span>Loading...</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+     SALES ANALYTICS
+══════════════════════════════════════════════════════ -->
+  <div class="page" id="page-sales">
+    <h1>💰 Sales Analytics</h1>
+    <p class="subtitle">Interactive analytics on the TPC-H benchmark dataset from <code>samples.tpch</code>.</p>
+
+    <div class="card filters">
+      <div class="filter-group">
+        <label>Year From</label>
+        <select id="sales-year-from">
+          <option value="1992">1992</option>
+          <option value="1993">1993</option>
+          <option value="1994" selected>1994</option>
+          <option value="1995">1995</option>
+          <option value="1996">1996</option>
+          <option value="1997">1997</option>
+          <option value="1998">1998</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Year To</label>
+        <select id="sales-year-to">
+          <option value="1992">1992</option>
+          <option value="1993">1993</option>
+          <option value="1994">1994</option>
+          <option value="1995">1995</option>
+          <option value="1996">1996</option>
+          <option value="1997" selected>1997</option>
+          <option value="1998">1998</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Order Status</label>
+        <select id="sales-status">
+          <option value="ALL">All</option>
+          <option value="O">Open</option>
+          <option value="F">Fulfilled</option>
+          <option value="P">Pending</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Top N Customers</label>
+        <input type="number" id="sales-topn" value="10" min="5" max="25" step="5" style="width:80px">
+      </div>
+      <button class="btn btn-primary" onclick="loadSales()">Apply</button>
+    </div>
+
+    <div class="kpi-row" id="sales-kpis"></div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('sales','trend')">📈 Revenue Trend</button>
+      <button class="tab-btn" onclick="switchTab('sales','region')">🌍 By Region</button>
+      <button class="tab-btn" onclick="switchTab('sales','customers')">🏆 Top Customers</button>
+    </div>
+    <div class="tab-panel active" id="sales-tab-trend">
+      <div id="sales-chart-trend" style="height:380px"></div>
+    </div>
+    <div class="tab-panel" id="sales-tab-region">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div id="sales-chart-pie" style="height:360px"></div>
+        <div id="sales-chart-nations" style="height:360px"></div>
+      </div>
+    </div>
+    <div class="tab-panel" id="sales-tab-customers">
+      <div id="sales-chart-customers" style="height:380px"></div>
+      <div class="data-table-wrap" id="sales-table-customers" style="margin-top:14px"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+     TAXI
+══════════════════════════════════════════════════════ -->
+  <div class="page" id="page-taxi">
+    <h1>🚕 NYC Taxi Analytics</h1>
+    <p class="subtitle">Interactive exploration of NYC taxi trips from <code>samples.nyctaxi.trips</code>.</p>
+
+    <div class="card filters">
+      <div class="filter-group">
+        <label>Fare Min ($)</label>
+        <input type="number" id="taxi-fare-min" value="0" min="0" max="200" style="width:80px">
+      </div>
+      <div class="filter-group">
+        <label>Fare Max ($)</label>
+        <input type="number" id="taxi-fare-max" value="100" min="0" max="200" style="width:80px">
+      </div>
+      <div class="filter-group">
+        <label>Distance Min (mi)</label>
+        <input type="number" id="taxi-dist-min" value="0" min="0" max="50" style="width:80px">
+      </div>
+      <div class="filter-group">
+        <label>Distance Max (mi)</label>
+        <input type="number" id="taxi-dist-max" value="20" min="0" max="50" style="width:80px">
+      </div>
+      <div class="filter-group">
+        <label>Sample Size</label>
+        <select id="taxi-sample">
+          <option value="10000">10,000</option>
+          <option value="50000">50,000</option>
+          <option value="100000">100,000</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="loadTaxi()">Apply</button>
+    </div>
+
+    <div class="kpi-row" id="taxi-kpis"></div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('taxi','dist')">📊 Distributions</button>
+      <button class="tab-btn" onclick="switchTab('taxi','hourly')">📅 Hourly Patterns</button>
+      <button class="tab-btn" onclick="switchTab('taxi','scatter')">🗺️ Fare vs Distance</button>
+    </div>
+    <div class="tab-panel active" id="taxi-tab-dist">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div id="taxi-chart-fare" style="height:340px"></div>
+        <div id="taxi-chart-dist" style="height:340px"></div>
+      </div>
+    </div>
+    <div class="tab-panel" id="taxi-tab-hourly">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div id="taxi-chart-hourly-trips" style="height:340px"></div>
+        <div id="taxi-chart-hourly-fare" style="height:340px"></div>
+      </div>
+    </div>
+    <div class="tab-panel" id="taxi-tab-scatter">
+      <div id="taxi-chart-scatter" style="height:380px"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+     SQL EXPLORER
+══════════════════════════════════════════════════════ -->
+  <div class="page" id="page-sql">
+    <h1>🔍 SQL Explorer</h1>
+    <p class="subtitle">Run ad-hoc SQL against the <code>samples</code> catalog using the Serverless SQL Warehouse.</p>
+
+    <div class="card">
+      <div class="filter-group" style="margin-bottom:12px">
+        <label>💡 Starter Query</label>
+        <select id="sql-starter" onchange="loadStarter()" style="width:100%">
+          <option value="">-- Select a starter query --</option>
+          <option
+            value="SELECT o_orderkey, o_custkey, o_totalprice, o_orderdate, o_orderstatus FROM samples.tpch.orders ORDER BY o_totalprice DESC LIMIT 10">
+            📦 TPC-H: Top 10 orders by value</option>
+          <option
+            value="SELECT n.n_name AS nation, ROUND(SUM(o.o_totalprice),0) AS total_revenue FROM samples.tpch.orders o JOIN samples.tpch.customer c ON o.o_custkey=c.c_custkey JOIN samples.tpch.nation n ON c.c_nationkey=n.n_nationkey GROUP BY 1 ORDER BY 2 DESC">
+            🌍 TPC-H: Revenue by nation</option>
+          <option
+            value="SELECT o_orderstatus, COUNT(*) AS orders, ROUND(AVG(o_totalprice),2) AS avg_value FROM samples.tpch.orders GROUP BY 1 ORDER BY 2 DESC">
+            📋 TPC-H: Order status breakdown</option>
+          <option
+            value="SELECT DATE_TRUNC('month', o_orderdate) AS month, ROUND(SUM(o_totalprice),0) AS revenue FROM samples.tpch.orders GROUP BY 1 ORDER BY 1">
+            📊 TPC-H: Monthly revenue trend</option>
+          <option
+            value="SELECT CASE WHEN trip_distance &lt; 1 THEN 'Short (&lt;1mi)' WHEN trip_distance &lt; 5 THEN 'Medium (1-5mi)' ELSE 'Long (5+mi)' END AS trip_type, COUNT(*) AS trips, ROUND(AVG(fare_amount),2) AS avg_fare FROM samples.nyctaxi.trips WHERE fare_amount>0 AND trip_distance>0 GROUP BY 1 ORDER BY MIN(trip_distance)">
+            🚕 Taxi: Average fare by trip type</option>
+          <option
+            value="SELECT HOUR(tpep_pickup_datetime) AS hour, COUNT(*) AS trips FROM samples.nyctaxi.trips GROUP BY 1 ORDER BY 1">
+            ⏱️ Taxi: Busiest pickup hours</option>
+        </select>
+      </div>
+      <div class="filter-group" style="margin-bottom:12px">
+        <label>SQL Query</label>
+        <textarea id="sql-editor">SELECT * FROM samples.tpch.orders LIMIT 20</textarea>
+      </div>
+      <div class="sql-controls">
+        <button class="btn btn-primary" onclick="runSQL()">▶️ Run Query</button>
+        <div class="filter-group" style="flex-direction:row;align-items:center;gap:6px">
+          <label style="margin:0">Max rows:</label>
+          <input type="number" id="sql-maxrows" value="500" min="10" max="5000" step="100" style="width:80px">
+        </div>
+        <span id="sql-status" style="font-size:0.85rem;color:#666"></span>
+      </div>
+    </div>
+
+    <div id="sql-results"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+     CATALOG BROWSER
+══════════════════════════════════════════════════════ -->
+  <div class="page" id="page-catalog">
+    <h1>📂 Catalog Browser</h1>
+    <p class="subtitle">Explore your Unity Catalog hierarchy — read-only.</p>
+    <div class="catalog-cols">
+      <div class="catalog-col">
+        <div class="catalog-col-header">🗄️ Catalogs</div>
+        <div id="catalog-list">
+          <div class="loading" style="padding:14px"><span class="spinner"></span></div>
+        </div>
+      </div>
+      <div class="catalog-col">
+        <div class="catalog-col-header">📁 Schemas</div>
+        <div id="schema-list"></div>
+      </div>
+      <div class="catalog-col">
+        <div class="catalog-col-header">📋 Tables</div>
+        <div id="table-list"></div>
+      </div>
+      <div class="catalog-col">
+        <div class="catalog-col-header">🔎 Details</div>
+        <div id="table-detail"></div>
+      </div>
+    </div>
+  </div>
+
+
+
+  <script>
+    // ═══════════════════════════════════════════════════════════
+    // NAVIGATION
+    // ═══════════════════════════════════════════════════════════
+    const PAGES = ['home', 'identity', 'sales', 'taxi', 'sql', 'catalog'];
+    let currentPage = 'home';
+
+    function navigate(page) {
+      PAGES.forEach(p => {
+        document.getElementById(`page-${p}`).classList.toggle('active', p === page);
+        document.getElementById(`nav-${p}`)?.classList.toggle('active', p === page);
+      });
+      currentPage = page;
+      if (page === 'identity' && !identityLoaded) loadIdentity();
+      if (page === 'sales' && !salesLoaded) loadSales();
+      if (page === 'taxi' && !taxiLoaded) loadTaxi();
+      if (page === 'catalog' && !catalogLoaded) loadCatalogs();
+      return false;
+    }
+
+    function switchTab(page, tab) {
+      document.querySelectorAll(`#page-${page} .tab-btn`).forEach(b => b.classList.remove('active'));
+      document.querySelectorAll(`#page-${page} .tab-panel`).forEach(p => p.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById(`${page}-tab-${tab}`).classList.add('active');
+      // Trigger Plotly resize so charts fill properly
+      setTimeout(() => window.dispatchEvent(new Event('resize')), 50);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // UTILS
+    // ═══════════════════════════════════════════════════════════
+    async function apiFetch(url, opts = {}) {
+      const r = await fetch(url, opts);
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({ detail: r.statusText }));
+        throw new Error(err.detail || r.statusText);
+      }
+      return r.json();
+    }
+
+    function showError(el, msg) {
+      document.getElementById(el).innerHTML =
+        `<div class="alert alert-error">⚠️ ${msg}</div>`;
+    }
+
+    function kpiHTML(label, value) {
+      return `<div class="kpi"><div class="label">${label}</div><div class="value">${value}</div></div>`;
+    }
+
+    function tableHTML(rows) {
+      if (!rows || rows.length === 0) return '<p style="color:#888;padding:12px">No data.</p>';
+      const cols = Object.keys(rows[0]);
+      const head = cols.map(c => `<th>${c}</th>`).join('');
+      const body = rows.map(r => `<tr>${cols.map(c => `<td>${r[c] ?? ''}</td>`).join('')}</tr>`).join('');
+      return `<div class="data-table-wrap"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+    }
+
+    function csvDownloadLink(rows) {
+      const cols = Object.keys(rows[0]);
+      const csv = [cols.join(','), ...rows.map(r => cols.map(c => JSON.stringify(r[c] ?? '')).join(','))].join('\n');
+      const b64 = btoa(unescape(encodeURIComponent(csv)));
+      return `<a href="data:text/csv;base64,${b64}" download="results.csv" class="btn btn-outline" style="display:inline-block;margin-top:10px;text-decoration:none">⬇️ Download CSV</a>`;
+    }
+
+    const fmtNum = v => Number(v).toLocaleString();
+    const fmtMoney = v => '$' + Number(v).toLocaleString(undefined, { minimumFractionDigits: 0 });
+
+    // ═══════════════════════════════════════════════════════════
+    // IDENTITY
+    // ═══════════════════════════════════════════════════════════
+    let identityLoaded = false;
+    async function loadIdentity() {
+      identityLoaded = true;
+      try {
+        const d = await apiFetch('/api/v1/identity/me');
+        const groups = d.groups?.length
+          ? d.groups.map(g => `<span class="badge">${g}</span>`).join('')
+          : '<span style="color:#888">No groups returned.</span>';
+        document.getElementById('identity-content').innerHTML = `
+      <div class="kpi-row" style="grid-template-columns:repeat(3,1fr)">
+        ${kpiHTML('Email', d.email || 'n/a')}
+        ${kpiHTML('Username', d.username || 'n/a')}
+        ${kpiHTML('IP Address', d.ip || 'n/a')}
+      </div>
+      ${d.sdk_error ? `<div class="alert alert-warning">⚠️ SDK: ${d.sdk_error}</div>` : ''}
+      ${!d.has_token ? `<div class="alert alert-warning">Basic info only. Enable <strong>On-behalf-of-user</strong> auth in app Settings → Authorization for full details.</div>` : ''}
+      <div class="card">
+        <h2 style="margin-bottom:12px">📋 Account Details</h2>
+        <div class="identity-grid">
+          <div><strong>Display Name:</strong> ${d.display_name || 'n/a'}</div>
+          <div><strong>Active:</strong> ${d.active === true ? '✅ Yes' : d.active === false ? '❌ No' : 'n/a'}</div>
+          <div><strong>User ID:</strong> <code>${d.user_id || 'n/a'}</code></div>
+          <div><strong>Workspace ID:</strong> <code>${d.workspace_id || 'n/a'}</code></div>
+        </div>
+        <h2 style="margin:16px 0 10px">👥 Group Memberships</h2>
+        <div>${groups}</div>
+      </div>`;
+      } catch (e) { showError('identity-content', e.message); }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // SALES
+    // ═══════════════════════════════════════════════════════════
+    let salesLoaded = false;
+    function salesParams() {
+      return new URLSearchParams({
+        year_from: document.getElementById('sales-year-from').value,
+        year_to: document.getElementById('sales-year-to').value,
+        status: document.getElementById('sales-status').value,
+        limit: document.getElementById('sales-topn').value,
+      });
+    }
+
+    async function loadSales() {
+      salesLoaded = true;
+      const p = salesParams();
+      loadSalesKPIs(p); loadSalesTrend(p); loadSalesRegion(p); loadSalesCustomers(p);
+    }
+
+    async function loadSalesKPIs(p) {
+      try {
+        const d = await apiFetch(`/api/v1/sales/kpis?${p}`);
+        document.getElementById('sales-kpis').innerHTML =
+          kpiHTML('Total Orders', fmtNum(d.total_orders)) +
+          kpiHTML('Unique Customers', fmtNum(d.unique_customers)) +
+          kpiHTML('Total Revenue', fmtMoney(d.total_revenue)) +
+          kpiHTML('Avg Order Value', '$' + Number(d.avg_order_value).toFixed(2));
+      } catch (e) { document.getElementById('sales-kpis').innerHTML = `<div class="alert alert-error">${e.message}</div>`; }
+    }
+
+    async function loadSalesTrend(p) {
+      try {
+        const rows = await apiFetch(`/api/v1/sales/trend?${p}`);
+        Plotly.newPlot('sales-chart-trend', [{
+          x: rows.map(r => r.month), y: rows.map(r => r.revenue),
+          type: 'scatter', mode: 'lines', fill: 'tozeroy',
+          line: { color: '#FF3621' }, name: 'Revenue'
+        }], { title: 'Monthly Revenue', margin: { t: 40 }, xaxis: { tickangle: -30 }, yaxis: { title: 'Revenue ($)' }, hovermode: 'x unified' }, { responsive: true });
+      } catch (e) { document.getElementById('sales-chart-trend').innerHTML = `<div class="alert alert-error">${e.message}</div>`; }
+    }
+
+    async function loadSalesRegion(p) {
+      try {
+        const rows = await apiFetch(`/api/v1/sales/by-region?${p}`);
+        const regions = {}, nations = [], revs = [], regs = [];
+        rows.forEach(r => {
+          regions[r.region] = (regions[r.region] || 0) + r.revenue;
+          nations.push(r.nation); revs.push(r.revenue); regs.push(r.region);
+        });
+        Plotly.newPlot('sales-chart-pie', [{
+          labels: Object.keys(regions), values: Object.values(regions),
+          type: 'pie', hole: 0.4
+        }], { title: 'Revenue by Region', margin: { t: 40 } }, { responsive: true });
+
+        const top15 = rows.slice(0, 15);
+        Plotly.newPlot('sales-chart-nations', [{
+          x: top15.map(r => r.revenue), y: top15.map(r => r.nation),
+          type: 'bar', orientation: 'h', marker: { color: '#1B3A8C' }
+        }], { title: 'Top Nations by Revenue', margin: { t: 40 }, yaxis: { autorange: 'reversed' } }, { responsive: true });
+      } catch (e) { document.getElementById('sales-chart-pie').innerHTML = `<div class="alert alert-error">${e.message}</div>`; }
+    }
+
+    async function loadSalesCustomers(p) {
+      try {
+        const rows = await apiFetch(`/api/v1/sales/top-customers?${p}`);
+        Plotly.newPlot('sales-chart-customers', [{
+          x: rows.map(r => r.revenue), y: rows.map(r => r.customer),
+          type: 'bar', orientation: 'h', marker: { color: '#FF3621' },
+          text: rows.map(r => fmtMoney(r.revenue)), textposition: 'outside',
+        }], { title: 'Top Customers by Revenue', margin: { t: 40, r: 120 }, yaxis: { autorange: 'reversed' } }, { responsive: true });
+        document.getElementById('sales-table-customers').innerHTML = tableHTML(
+          rows.map(r => ({ customer: r.customer, segment: r.segment, orders: fmtNum(r.orders), revenue: fmtMoney(r.revenue), avg_order: '$' + Number(r.avg_order).toFixed(2) }))
+        );
+      } catch (e) { document.getElementById('sales-chart-customers').innerHTML = `<div class="alert alert-error">${e.message}</div>`; }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // TAXI
+    // ═══════════════════════════════════════════════════════════
+    let taxiLoaded = false;
+    function taxiParams() {
+      return new URLSearchParams({
+        fare_min: document.getElementById('taxi-fare-min').value,
+        fare_max: document.getElementById('taxi-fare-max').value,
+        dist_min: document.getElementById('taxi-dist-min').value,
+        dist_max: document.getElementById('taxi-dist-max').value,
+        sample: document.getElementById('taxi-sample').value,
+      });
+    }
+
+    async function loadTaxi() {
+      taxiLoaded = true;
+      const p = taxiParams();
+      loadTaxiKPIs(p); loadTaxiDist(p); loadTaxiHourly(p); loadTaxiScatter(p);
+    }
+
+    async function loadTaxiKPIs(p) {
+      try {
+        const d = await apiFetch(`/api/v1/taxi/kpis?${p}`);
+        document.getElementById('taxi-kpis').innerHTML =
+          kpiHTML('Total Trips', fmtNum(d.total_trips)) +
+          kpiHTML('Avg Fare', '$' + Number(d.avg_fare).toFixed(2)) +
+          kpiHTML('Avg Distance', Number(d.avg_distance).toFixed(1) + ' mi') +
+          kpiHTML('Avg Fare / Mile', '$' + Number(d.avg_fare_per_mile).toFixed(2));
+      } catch (e) { document.getElementById('taxi-kpis').innerHTML = `<div class="alert alert-error">${e.message}</div>`; }
+    }
+
+    async function loadTaxiDist(p) {
+      try {
+        const rows = await apiFetch(`/api/v1/taxi/distributions?${p}`);
+        Plotly.newPlot('taxi-chart-fare', [{
+          x: rows.map(r => r.fare_amount), type: 'histogram', nbinsx: 50,
+          marker: { color: '#FF3621' }, name: 'Fare'
+        }], { title: 'Fare Amount Distribution', xaxis: { title: 'Fare ($)' }, margin: { t: 40 } }, { responsive: true });
+        Plotly.newPlot('taxi-chart-dist', [{
+          x: rows.map(r => r.trip_distance), type: 'histogram', nbinsx: 50,
+          marker: { color: '#1B3A8C' }, name: 'Distance'
+        }], { title: 'Trip Distance Distribution', xaxis: { title: 'Distance (miles)' }, margin: { t: 40 } }, { responsive: true });
+      } catch (e) { document.getElementById('taxi-chart-fare').innerHTML = `<div class="alert alert-error">${e.message}</div>`; }
+    }
+
+    async function loadTaxiHourly(p) {
+      try {
+        const rows = await apiFetch(`/api/v1/taxi/hourly?${p}`);
+        Plotly.newPlot('taxi-chart-hourly-trips', [{
+          x: rows.map(r => r.hour_of_day), y: rows.map(r => r.trips),
+          type: 'bar', marker: { color: '#FF3621' }
+        }], { title: 'Trips by Hour of Day', xaxis: { title: 'Hour (24h)' }, yaxis: { title: 'Trips' }, margin: { t: 40 } }, { responsive: true });
+        Plotly.newPlot('taxi-chart-hourly-fare', [{
+          x: rows.map(r => r.hour_of_day), y: rows.map(r => r.avg_fare),
+          type: 'scatter', mode: 'lines+markers', line: { color: '#1B3A8C' }
+        }], { title: 'Average Fare by Hour', xaxis: { title: 'Hour (24h)' }, yaxis: { title: 'Avg Fare ($)' }, margin: { t: 40 } }, { responsive: true });
+      } catch (e) { document.getElementById('taxi-chart-hourly-trips').innerHTML = `<div class="alert alert-error">${e.message}</div>`; }
+    }
+
+    async function loadTaxiScatter(p) {
+      try {
+        const rows = await apiFetch(`/api/v1/taxi/scatter?${p}`);
+        Plotly.newPlot('taxi-chart-scatter', [{
+          x: rows.map(r => r.trip_distance), y: rows.map(r => r.fare_amount),
+          mode: 'markers', type: 'scatter',
+          marker: { color: '#FF3621', opacity: 0.4, size: 5 }
+        }], { title: 'Fare vs Distance (random sample)', xaxis: { title: 'Distance (miles)' }, yaxis: { title: 'Fare ($)' }, margin: { t: 40 } }, { responsive: true });
+      } catch (e) { document.getElementById('taxi-chart-scatter').innerHTML = `<div class="alert alert-error">${e.message}</div>`; }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // SQL EXPLORER
+    // ═══════════════════════════════════════════════════════════
+    function loadStarter() {
+      const v = document.getElementById('sql-starter').value;
+      if (v) document.getElementById('sql-editor').value = v;
+    }
+
+    async function runSQL() {
+      const query = document.getElementById('sql-editor').value;
+      const maxRows = parseInt(document.getElementById('sql-maxrows').value) || 500;
+      const status = document.getElementById('sql-status');
+      const results = document.getElementById('sql-results');
+
+      status.innerHTML = '<span class="spinner"></span>Running...';
+      results.innerHTML = '';
+
+      try {
+        const d = await apiFetch('/api/v1/sql/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query, max_rows: maxRows }),
+        });
+        status.textContent = `✅ ${d.count.toLocaleString()} rows returned`;
+
+        // Auto-viz section
+        const numCols = d.columns.filter(c => d.rows.length && typeof d.rows[0][c] === 'number');
+        const allCols = d.columns;
+        let vizHTML = '';
+        if (numCols.length && allCols.length >= 2) {
+          const xOpts = allCols.map(c => `<option value="${c}">${c}</option>`).join('');
+          const yOpts = numCols.map(c => `<option value="${c}">${c}</option>`).join('');
+          vizHTML = `
+        <div class="card" style="margin-top:14px">
+          <h2 style="margin-bottom:12px">📈 Auto Visualization</h2>
+          <div class="filters" style="margin-bottom:12px">
+            <div class="filter-group"><label>X axis</label><select id="viz-x">${xOpts}</select></div>
+            <div class="filter-group"><label>Y axis</label><select id="viz-y">${yOpts}</select></div>
+            <div class="filter-group"><label>Chart type</label>
+              <select id="viz-type">
+                <option>Bar</option><option>Line</option><option>Scatter</option><option>Area</option>
+              </select>
+            </div>
+            <button class="btn btn-outline" onclick="renderViz(sqlResults)">Render</button>
+          </div>
+          <div id="viz-chart" style="height:320px"></div>
+        </div>`;
+        }
+
+        results.innerHTML =
+          `<div class="alert alert-success">✅ ${d.count.toLocaleString()} rows returned</div>` +
+          tableHTML(d.rows) +
+          csvDownloadLink(d.rows) +
+          vizHTML;
+
+        window.sqlResults = d.rows;
+      } catch (e) {
+        status.textContent = '';
+        results.innerHTML = `<div class="alert alert-error">⚠️ ${e.message}</div>`;
+      }
+    }
+
+    function renderViz(rows) {
+      if (!rows || !rows.length) return;
+      const x = document.getElementById('viz-x').value;
+      const y = document.getElementById('viz-y').value;
+      const type = document.getElementById('viz-type').value;
+      const xs = rows.map(r => r[x]), ys = rows.map(r => r[y]);
+      let trace;
+      if (type === 'Bar') trace = { x: xs, y: ys, type: 'bar', marker: { color: '#FF3621' } };
+      else if (type === 'Line') trace = { x: xs, y: ys, type: 'scatter', mode: 'lines+markers', line: { color: '#FF3621' } };
+      else if (type === 'Scatter') trace = { x: xs, y: ys, type: 'scatter', mode: 'markers', marker: { color: '#FF3621', opacity: 0.6 } };
+      else trace = { x: xs, y: ys, type: 'scatter', mode: 'lines', fill: 'tozeroy', line: { color: '#FF3621' } };
+      Plotly.newPlot('viz-chart', [trace], { margin: { t: 20 } }, { responsive: true });
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // CATALOG BROWSER
+    // ═══════════════════════════════════════════════════════════
+    let catalogLoaded = false;
+    let selectedCatalog = null, selectedSchema = null;
+
+    async function loadCatalogs() {
+      catalogLoaded = true;
+      try {
+        const d = await apiFetch('/api/v1/catalog/catalogs');
+        document.getElementById('catalog-list').innerHTML =
+          d.catalogs.map(c => `<div class="catalog-item" onclick="selectCatalog('${c}',this)">${c}</div>`).join('');
+      } catch (e) { showError('catalog-list', e.message); }
+    }
+
+    async function selectCatalog(name, el) {
+      document.querySelectorAll('#catalog-list .catalog-item').forEach(i => i.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedCatalog = name;
+      selectedSchema = null;
+      document.getElementById('schema-list').innerHTML = '<div class="loading" style="padding:14px"><span class="spinner"></span></div>';
+      document.getElementById('table-list').innerHTML = '';
+      document.getElementById('table-detail').innerHTML = '';
+      try {
+        const d = await apiFetch(`/api/v1/catalog/schemas/${name}`);
+        document.getElementById('schema-list').innerHTML =
+          d.schemas.map(s => `<div class="catalog-item" onclick="selectSchema('${s}',this)">${s}</div>`).join('') || '<div style="padding:14px;color:#888">No schemas.</div>';
+      } catch (e) { showError('schema-list', e.message); }
+    }
+
+    async function selectSchema(name, el) {
+      document.querySelectorAll('#schema-list .catalog-item').forEach(i => i.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedSchema = name;
+      document.getElementById('table-list').innerHTML = '<div class="loading" style="padding:14px"><span class="spinner"></span></div>';
+      document.getElementById('table-detail').innerHTML = '';
+      try {
+        const d = await apiFetch(`/api/v1/catalog/tables/${selectedCatalog}/${name}`);
+        document.getElementById('table-list').innerHTML =
+          d.tables.map(t => `<div class="catalog-item" onclick="selectTable('${t.name}',this)" title="${t.comment}">${t.name} <small style="color:#999">${t.type}</small></div>`).join('') || '<div style="padding:14px;color:#888">No tables.</div>';
+      } catch (e) { showError('table-list', e.message); }
+    }
+
+    async function selectTable(name, el) {
+      document.querySelectorAll('#table-list .catalog-item').forEach(i => i.classList.remove('selected'));
+      el.classList.add('selected');
+      document.getElementById('table-detail').innerHTML = '<div class="loading" style="padding:14px"><span class="spinner"></span></div>';
+      try {
+        const d = await apiFetch(`/api/v1/catalog/detail/${selectedCatalog}/${selectedSchema}/${name}`);
+        const cols = d.columns.map(c =>
+          `<tr><td>${c.name}</td><td><code>${c.type}</code></td><td>${c.nullable ? '✅' : '❌'}</td><td style="color:#888">${c.comment}</td></tr>`
+        ).join('');
+        const colNames = d.columns.map(c => c.name).join(', ') || '*';
+        document.getElementById('table-detail').innerHTML = `
+      <div class="detail-pane">
+        <div class="field"><strong>Type:</strong> <code>${d.type}</code></div>
+        <div class="field"><strong>Format:</strong> <code>${d.format}</code></div>
+        <div class="field"><strong>Owner:</strong> ${d.owner || 'n/a'}</div>
+        ${d.comment ? `<div class="field"><strong>Comment:</strong> ${d.comment}</div>` : ''}
+        <strong style="display:block;margin:12px 0 6px">Schema</strong>
+        <div class="data-table-wrap">
+          <table><thead><tr><th>Column</th><th>Type</th><th>Nullable</th><th>Comment</th></tr></thead>
+          <tbody>${cols}</tbody></table>
+        </div>
+        <strong style="display:block;margin:12px 0 6px">SQL Reference</strong>
+        <pre>SELECT ${colNames}
+FROM ${selectedCatalog}.${selectedSchema}.${name}
+LIMIT 100</pre>
+      </div>`;
+      } catch (e) { showError('table-detail', e.message); }
+    }
+
+
+    // ═══════════════════════════════════════════════════════════
+    // BOOT
+    // ═══════════════════════════════════════════════════════════
+    document.addEventListener('DOMContentLoaded', () => navigate('home'));
+  </script>
+</body>
+
+</html>
