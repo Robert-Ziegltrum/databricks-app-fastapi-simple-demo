@@ -1,4 +1,4 @@
-command: ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8080"]
+command: ["uvicorn", "app:app"]
 
 env:
   # Optional: pin a specific warehouse. If omitted, the app auto-discovers one.
